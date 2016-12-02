@@ -167,24 +167,15 @@ containers for the string data.  More concretely, imagine parsing a command
 line string whose parameters are space delimited.  This can only be done for
 tails of the string with '\0' terminated char * strings.
 
-######## 翻译：
-一个非常有用的场景是当一个字符串包含很多子串，其中一个子串想要作为只读参数的引用传递给某个字符串函数，这个字符串函数不需要为字符串数据分配整个空间。更具体来说，假想解析一个命令行字符串，它的参数有空间限制，这时只能靠以'\0'结尾打断char* 字符串的方式来完成。
-
 Improved NULL semantics and error handling
-#######：
-改善NULL语义和错误处理
 ------------------------------------------
 
 Unless otherwise noted, if a NULL pointer is passed as a bstring or any other
 detectably illegal parameter, the called function will return with an error
 indicator (either NULL or BSTR_ERR) rather than simply performing a NULL
 pointer access, or having undefined behavior.
-#######：
-除非有另外的说明，如果一个NULL指针或者任何其他非法参数传入了一个bstring中，被调用的函数将会返回一个错误指示(NULL或者BSTR_ERR)而不是仅仅给一个NULL指针或者未定义行为。
 
 To illustrate the value of this, consider the following example:
-########:
-举例说明这个的价值，考虑下面的例子：
 
         strcpy (p = malloc (13 * sizeof (char)), "Hello,");
         strcat (p, " World");
@@ -199,15 +190,11 @@ parameters are NULL.  However:
 is well defined, because if either p or q are assigned NULL (indicating a
 failure to allocate memory) both bstrcat and bdestroy will recognize it and
 perform no detrimental action.
-#########:
-上面的程序是一个好的定义，因为如果p or q被初始化为NULL(指示一个分配内存的失败)，bstrcat和bdestroy都会识别出来并且不会做出有害的行动。
 
 Note that it is not necessary to check any of the members of a returned
 bstring for internal correctness (in particular the data member does not need
 to be checked against NULL when the header is non-NULL), since this is
 assured by the bstring library itself.
-########：
-注意：没有必要为了内部的正确性检查bstring返回的每个成员(通常，当header不为空时，不用检查其数据成员是否为空)，因为这被bstring库本身保证。
 
 bStreams
 --------
@@ -221,44 +208,31 @@ bsread, bsreadln or bsreadlns can be called to read portions of the stream.
 Finally, the bsclose function is called to close the bStream -- it will
 return a handle to the original (core) stream.  So bStreams, essentially,
 wrap other streams.
-#########:
-除了bget 和 bread 函数外，bstring可以抽象出一个具有很高性能的只读的streams称作bStream.
-通常来说，这个idea是打开一个内核的流(有点像fopen)然后传递他的handle as well as 一个bNread函数的指针(like fread)给这个bsopen函数，bsopen函数将会返回一个打开bStream流的handle.然后bsread, bsreadln, or bsreadlns函数可以被调用来读取这个流。最后，调用bsclose函数来关闭bStream流---它会返回一个原始的内核流的handle。所以，bStream本质上来说封装了其他的streams.
 
 The bStreams have two main advantages over the bgets and bread (as well as
 fgets/ungetc) paradigms:
-#########:
-bStream流有两个主要的优势：
 
 1) Improved functionality via the bunread function which allows a stream to
    unread characters, giving the bStream stack-like functionality if so
    desired.
-   ########:
-   通过bunread函数提高功能性，bunread函数允许一个流unread字符，通过bStream的类似栈功能。
 2) A very high performance bsreadln function.  The C library function fgets()
    (and the bgets function) can typically be written as a loop on top of
    fgetc(), thus paying all of the overhead costs of calling fgetc on a per
    character basis.  bsreadln will read blocks at a time, thus amortizing the
    overhead of fread calls over many characters at once.
-   #########：
-   bsreadln函数有非常高的性能。C库函数fgets()(和bgets函数)只是基于fgetc()函数循环的写入单个字符(性能很低).bsreadln将会一次读一个block，因此分摊了fread的损耗。
 
 However, clearly bStreams are suboptimal or unusable for certain kinds of
 streams (stdin) or certain usage patterns (a few spotty, or non-sequential
 reads from a slow stream.)  For those situations, using bgets will be more
 appropriate.
-#########：
-然而，显然对某些种类的流(stdin)或者特定的使用模式(一些质量不一的或者不连续的从一个缓慢的流中读)bStream不是最好的甚至是不能使用的。在这些情况下，bgets会更加合适。
 
 The semantics of bStreams allows practical construction of layerable data
 streams.  What this means is that by writing a bNread compatible function on
 top of a bStream, one can construct a new bStream on top of it.  This can be
 useful for writing multi-pass parsers that don't actually read the entire
 input more than once and don't require the use of intermediate storage.
-#######:
-bStreams允许实际的分层数据stream的构造，这意味着通过在bStream上写入一个bNread兼容函数，你可以在它上面创建一个新的bStream。对multi-pass parser写入来说实际上并不需要多次的读入整个输入并且不需要使用中间介质存储，这是这个技术是有用的。
 
-Aliasing (混淆现象,别名)
+Aliasing
 --------
 
 Aliasing occurs when a function is given two parameters which point to data
@@ -267,8 +241,6 @@ disturb read only functions, for many libraries this can make functions that
 write to these memory locations malfunction.  This is a common problem of the
 C standard library and especially the string functions in the C standard
 library.
-########:
-Aliasing现象发生当一个函数调用两个指向数据结构的参数，同时这两个参数内存重叠。这并不会妨碍只读函数，对大多数库来说向这些内存区域中写入数据才会导致错误。这是C标准库的一个普遍问题特别是字符串库。
 
 The C standard string library is entirely char by char oriented (as is
 bstring) which makes conforming implementations alias safe for some
@@ -279,8 +251,6 @@ the "restrict" pointer modifier which allows the compiler to document and
 assume a no-alias condition on usage.  However, only the most trivial cases
 can be caught (if at all) by the compiler at compile time, and thus there is
 no actual enforcement of non-aliasing.
-#######：
-总结：C标准库没有解决Aliasing的问题，会导致意想不到的或者未定义的行为。
 
 Bstrlib, by contrast, permits aliasing and is completely aliasing safe, in
 the C99 sense of aliasing.  That is to say, under the assumption that
@@ -291,21 +261,15 @@ With the exception of the reference building macros, the library behaves as
 if all read-only parameters are first copied and replaced by temporary
 non-aliased parameters before any writing to any output bstring is performed
 (though actual copying is extremely rarely ever done.)
-#########：
-Bstrlib，相比来说，允许aliasing，并且是安全的。也就是说，不同类型的指针绝对不alias。这个库表现的好像所有只读参数首先被临时的non-alias参数替换(尽管实际上复制发生的很少)
 
 Besides being a useful safety feature, bstring searching/comparison
 functions can improve to O(1) execution when aliasing is detected.
-#########：
-除了安全的特征，bstring搜索/比较的复杂福提升到了O(1)当aliasing被检测到时。
 
 Note that aliasing detection and handling code in Bstrlib is generally
 extremely cheap.  There is almost never any appreciable performance penalty
 for using aliased parameters.
-##########：
-注意到aliasing检测和处理代码在Bstrlib中非常廉价。几乎没有什么明显的性能牺牲对使用aliasing参数。
 
-Reenterancy（可重入）
+Reenterancy
 -----------
 
 Nearly every function in Bstrlib is a leaf function, and is completely
@@ -316,10 +280,8 @@ with an error status (note that Bstrlib functions which return an error do
 not modify the string in any way.)  The string can in fact be modified by the
 callback and the behaviour is deterministic.  See the documentation of the
 various split functions for more details.
-#########：
-在Bstrlib中几乎每个函数都是leaf函数，并且是完全可重入的且室友异常处理的。使用回调机制的函数仅仅需要源字符串不被回调函数销毁这个条件，否则的话回调函数将会返回一个错误状态(注意Bstrlib中的返回一个错误的函数不会以任何方式改变这个字符串)。实际上字符串可以被改变并且行为是确定的。看不同split函数的文档获取更多的细节。
 
-Undefined scenarios(未定义的场景)
+Undefined scenarios
 -------------------
 
 One of the basic important premises for Bstrlib is to not to increase the
@@ -330,40 +292,26 @@ undefined action.  But due to C/C++ language and library limitations, there
 is no way to define a non-trivial library that is completely without
 undefined operations.  All such possible undefined operations are described
 below:
-########:
-一个用于Bstrlib的一个基本的重要前提是在在其他参数不确定的情况下不要增加自己的传播。通常来说，除了极其特殊的情况，只使用bstring库函数不会导致任何未定义行为。但是由于C/C++语言的局限性，没有办法定义一个non-trivial库完全没有未定义操作。所有可能的未定义操作描述在下面：
 
 1) bstrings or struct tagbstrings that are not explicitely initialized cannot
    be passed as a parameter to any bstring function.
-   #########：
-   bstring和结构tagbstring必须显式初始化，否则不能作为一个参数传递给任何bstring函数。
 2) The members of the NULL bstring cannot be accessed directly.  (Though all
    APIs and macros detect the NULL bstring.)
-   #########：
-   NULL bstring的成员不能被直接访问。(尽管所有API和宏可以)
 3) A bstring whose data member has not been obtained from a malloc or
    compatible call and which is write accessible passed as a writable
    parameter will lead to undefined results.  (i.e., do not writeAllow any
    constructed bstrings unless the data portion has been obtained from the
    heap.)
-   ##########：
-   有一个bstring，其数据成员没有从malloc族函数中获得并且作为一个可写参数传递，将会导致未定义结果。(只有从heap上获取的数据部分才能允许写入)
 4) If the headers of two strings alias but are not identical (which can only
    happen via a defective manual construction), then passing them to a
    bstring function in which one is writable is not defined.
-   ##########：
-   如果有两个字符串alias但是不完全相同(这仅仅通过有缺陷的手工创建才会发生)，然后传递他们给一个bstring函数，这个函数可写时会发生未定义。
 5) If the mlen member is larger than the actual accessible length of the data
    member for a writable bstring, or if the slen member is larger than the
    readable length of the data member for a readable bstring, then the
    corresponding bstring operations are undefined.
-   #########：
-   如果mlen成员比实际可传入的可写的数据成员的长度大，或者slen成员比可读的数据成员的长度大，然后相应的bstring操作是未定义的。
 6) Any bstring definition whose header or accessible data portion has been
    assigned to inaccessible or otherwise illegal memory clearly cannot be
    acted upon by the bstring library in any way.
-   #########：
-   任何bstring定义的header或者可进入的数据部分被不可进入的或者非法的内存 初始化是不可以的。
 7) Destroying the source of an incremental split from within the callback
    and not returning with a negative value (indicating that it should abort)
    will lead to undefined behaviour.  (Though *modifying* or adjusting the
@@ -379,8 +327,6 @@ any undefined scenario to occurr.  I.e., the policy of restricting usage of
 bstrings to the bstring API can significantly reduce the risk of runtime
 errors (in practice it should eliminate them) related to string manipulation
 due to undefined action.
-########：
-虽然这可能看起来像一个长长的名单，没有bstring API的单独使用可引起任何未定义的场景occurr。也就是说，限制的使用政策bstrings到bstringAPI可以显著降低运行风险错误（在实践中，应消除它们）相关的字符串操作由于未定义的动作。
 
 C++ wrapper
 -----------
@@ -512,7 +458,7 @@ rules which can be enforced mechanically rather than socially.  This is
 useful for larger, or open development projects where its more difficult to
 enforce social rules or "coding conventions".
 
-Problems not solved（没有解决的问题）
+Problems not solved
 -------------------
 
 Bstrlib is written for the C and C++ languages, which have inherent weaknesses
@@ -537,15 +483,13 @@ Other problems not addressed:
 Note that except for spotty support of wide characters, the default C
 standard library does not address any of these problems either.
 
-Configurable compilation options(配置编译选项)
+Configurable compilation options
 --------------------------------
 
 The Better String Library is not an application, it is a library.  To compile
 it, you need to compile bstrlib.c to an object file that is linked to your
 application.  A Makefile might contain entries such as the following to
 accomplish this:
-##########：
-Bstrlib不是一个app，它是一个库。为了编译它，你需要把bstrlib.c编译成object文件，链接到你的application中。Makefile可能包含下列完成的条目：
 
 BSTRDIR = $(CDIR)/bstrlib
 INCLUDES = -I$(BSTRDIR)
@@ -569,14 +513,10 @@ You can configure bstrlib using with the standard macro defines passed to
 the compiler.  All configuration options are meant solely for the purpose of
 compiler compatibility.  Configuration options are not meant to change the
 semantics or capabilities of the library, except where it is unavoidable.
-########：
-你可以使用传递给编译器的标准的宏定义来配置bstring。所有的配置选项完全是为了编译的兼容性。配置选选项不应该改变库的语义和功能，除非这是不可避免的。
 
 Since some C++ compilers don't include the Standard Template Library and some
 have the options of disabling exception handling, a number of macros can be
 used to conditionally compile support for each of this:
-###########：
-因为有些C++编译器不包含STL并且一些有编译器有关闭异常处理的选项。一些宏可以使用条件编译来支持这些特性。
 
 BSTRLIB_CAN_USE_STL
 
@@ -612,13 +552,9 @@ BSTRLIB_DOESNT_THROW_EXCEPTIONS
 
 Note that these macros must be defined consistently throughout all modules
 that use CBStrings including bstrwrap.cpp.
-#########：
-注意：这些宏必须一致地定义（贯穿整个使用CBStrings模块）
 
 Some older C compilers do not support functions such as vsnprintf.  This is
 handled by the following macro variables:
-########：
-有些老的C编译器不支持像vsnprintf这样的函数。可以用下面的宏变量处理：
 
 BSTRLIB_NOVSNP
 
@@ -633,7 +569,7 @@ BSTRLIB_VSNP_OK
     vsnprintf.
     Defining BSTRLIB_NOVSNP overrides the BSTRLIB_VSNP_OK macro.
 
-Semantic compilation options(语义的编译选项)
+Semantic compilation options
 ----------------------------
 
 Bstrlib comes with very few compilation options for changing the semantics of
@@ -657,7 +593,7 @@ Note that these macros must be defined consistently throughout all modules
 that use bstrings or CBStrings including bstrlib.c, bstraux.c and
 bstrwrap.cpp.
 
-Version（版本）
+Version
 -------
 
 Current release: v1.0.0
@@ -685,7 +621,7 @@ Major value will increment.
 
 ===============================================================================
 
-Files(文件简介)
+Files
 -----
 
 Core C files (required for C and C++):
@@ -717,8 +653,6 @@ basic bstring library.  C++ projects need to additionally include bstrwrap.h
 and compile/link bstrwrap.cpp.  For both, there may be a need to make choices
 about feature configuration as described in the "Configurable compilation
 options" in the section above.
-########：
-C模块仅仅需要包含bstrlib.h并且编译链接bstrlib.c来使用基本的bstring库。C++工程需要额外的包含bstrwrap.h并且编译链接bstrwrap.cpp。对两者来说，可能需要在配置编译选项中做出做出合适的选择。
 
 Other files that are included in this archive are:
 
@@ -730,7 +664,7 @@ bstrlib.txt     - This file
 
 ===============================================================================
 
-The functions（函数介绍）
+The functions
 -------------
 
     extern bstring bfromcstr (const char * str);
@@ -738,8 +672,7 @@ The functions（函数介绍）
     Take a standard C library style '\0' terminated char buffer and generate
     a bstring with the same contents as the char buffer.  If an error occurs
     NULL is returned.
-  #######：
-  以一个'\0'打断的char buffer来生成一个string。如果一个错误发生，NULL会返回。
+
     So for example:
 
     bstring b = bfromcstr ("Hello");
